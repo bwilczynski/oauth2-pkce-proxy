@@ -4,13 +4,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 )
 
-type Authorize struct {
-	log *log.Logger
+type OAuth2Provider struct {
+	AuthorizeURL *url.URL
+	TokenURL     *url.URL
 }
 
-type AuthorizeRequest struct {
+func NewOAuth2Provider(authorizeURL *url.URL, tokenURL *url.URL) *OAuth2Provider {
+	return &OAuth2Provider{authorizeURL, tokenURL}
+}
+
+type Authorize struct {
+	log      *log.Logger
+	provider *OAuth2Provider
+}
+
+func NewAuthorize(log *log.Logger, provider *OAuth2Provider) *Authorize {
+	return &Authorize{log, provider}
+}
+
+type authorizeRequest struct {
 	ClientId            string
 	CodeChallenge       string
 	CodeChallengeMethod string
@@ -21,7 +36,7 @@ const (
 	CodeChallengeMethodS256 = "S256"
 )
 
-func (ar *AuthorizeRequest) FromQueryParams(r *http.Request) {
+func (ar *authorizeRequest) FromQueryParams(r *http.Request) {
 	query := r.URL.Query()
 
 	ar.ClientId = query.Get("client_id")
@@ -34,12 +49,8 @@ func (ar *AuthorizeRequest) FromQueryParams(r *http.Request) {
 	ar.RedirectUri = query.Get("redirect_uri")
 }
 
-func NewAuthorize(log *log.Logger) *Authorize {
-	return &Authorize{log}
-}
-
 func (h *Authorize) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ar := &AuthorizeRequest{}
+	ar := &authorizeRequest{}
 	ar.FromQueryParams(r)
 
 	h.log.Printf("Authorize handler called: %#v", ar)
@@ -50,5 +61,10 @@ func (h *Authorize) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("%#v", ar)))
+	q := r.URL.Query()
+	q.Set("redirect_uri", fmt.Sprintf("http://%s", r.Host))
+
+	redirectURI := fmt.Sprintf("%s?%s", h.provider.AuthorizeURL, q.Encode())
+	w.Header().Add("Location", redirectURI)
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
