@@ -4,25 +4,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 )
 
-type OAuth2Provider struct {
-	AuthorizeURL *url.URL
-	TokenURL     *url.URL
-}
-
-func NewOAuth2Provider(authorizeURL *url.URL, tokenURL *url.URL) *OAuth2Provider {
-	return &OAuth2Provider{authorizeURL, tokenURL}
-}
-
 type Authorize struct {
-	log      *log.Logger
-	provider *OAuth2Provider
+	log          *log.Logger
+	provider     *OAuth2Provider
+	callbackPath string
 }
 
-func NewAuthorize(log *log.Logger, provider *OAuth2Provider) *Authorize {
-	return &Authorize{log, provider}
+func NewAuthorize(log *log.Logger, provider *OAuth2Provider, callbackPath string) *Authorize {
+	return &Authorize{log, provider, callbackPath}
 }
 
 type authorizeRequest struct {
@@ -62,7 +53,7 @@ func (h *Authorize) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := r.URL.Query()
-	q.Set("redirect_uri", fmt.Sprintf("http://%s", r.Host))
+	q.Set("redirect_uri", fmt.Sprintf("http://%s%s?redirect_uri=%s", r.Host, h.callbackPath, ar.RedirectUri))
 
 	redirectURI := fmt.Sprintf("%s?%s", h.provider.AuthorizeURL, q.Encode())
 	w.Header().Add("Location", redirectURI)

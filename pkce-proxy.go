@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -16,7 +15,6 @@ import (
 
 var (
 	listenPort int
-	provider   *handlers.OAuth2Provider
 )
 
 func init() {
@@ -26,26 +24,13 @@ func init() {
 	if listenPort == 0 {
 		listenPort = 8080
 	}
-
-	authURL, err := url.Parse(os.Getenv("PKCE_PROXY_OAUTH2_AUTH_URL"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tokenURL, err := url.Parse(os.Getenv("PKCE_PROXY_OAUTH2_TOKEN_URL"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	provider = handlers.NewOAuth2Provider(authURL, tokenURL)
 }
 
 func main() {
 	log := log.New(os.Stdout, "", log.LstdFlags)
 
 	mux := http.NewServeMux()
-	mux.Handle("/authorize", handlers.NewAuthorize(log, provider))
-	mux.Handle("/access_token", handlers.NewAccessToken(log))
+	handlers.RegisterRoutes(mux, log)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", listenPort),
@@ -71,6 +56,7 @@ func main() {
 	osSignal := <-sigChannel
 	log.Printf("Received %v signal, performing graceful shutdown.\n", osSignal)
 
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	server.Shutdown(ctx)
 }
