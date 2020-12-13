@@ -7,33 +7,19 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"time"
-
-	"github.com/bwilczynski/oauth2-pkce-proxy/handlers"
 )
-
-var (
-	listenPort int
-)
-
-func init() {
-	if lp := os.Getenv("PKCE_PROXY_PORT"); lp != "" {
-		listenPort, _ = strconv.Atoi(lp)
-	}
-	if listenPort == 0 {
-		listenPort = 8080
-	}
-}
 
 func main() {
 	log := log.New(os.Stdout, "", log.LstdFlags)
+	cfg := &Config{}
+	cfg.ReadFromEnv(log)
 
 	mux := http.NewServeMux()
-	handlers.RegisterRoutes(mux, log)
+	registerRoutes(mux, cfg, log)
 
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", listenPort),
+		Addr:         fmt.Sprintf(":%d", cfg.ListenPort),
 		Handler:      mux,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
@@ -47,7 +33,7 @@ func main() {
 		}
 	}()
 
-	log.Printf("Server started at port %d.", listenPort)
+	log.Printf("Server started at port %d.", cfg.ListenPort)
 
 	sigChannel := make(chan os.Signal)
 	signal.Notify(sigChannel, os.Interrupt)
@@ -59,4 +45,10 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	server.Shutdown(ctx)
+}
+
+func registerRoutes(mux *http.ServeMux, cfg *Config, log *log.Logger) {
+	mux.Handle("/authorize", NewAuthorize(log, cfg.Provider, "/code"))
+	mux.Handle("/access_token", NewAccessToken(log))
+	mux.Handle("/code", NewAuthorizeCode(log))
 }
