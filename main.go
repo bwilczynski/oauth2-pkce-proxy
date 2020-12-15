@@ -48,7 +48,7 @@ func main() {
 }
 
 func registerRoutes(mux *http.ServeMux, cfg *Config, log *log.Logger) {
-	mux.Handle("/authorize", NewAuthorize(log, cfg.Provider, "/code"))
-	mux.Handle("/access_token", NewAccessToken(log))
-	mux.Handle("/code", NewAuthorizeCode(log))
+	mux.Handle("/authorize", NewAuthorizeHandler(log, cfg.Provider, "/code"))
+	mux.Handle("/access_token", NewAccessTokenHandler(log))
+	mux.Handle("/code", NewAuthorizeCodeHandler(log))
 }

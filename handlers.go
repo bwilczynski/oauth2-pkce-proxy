@@ -18,7 +18,7 @@ type AuthorizeHandler struct {
 	callbackPath string
 }
 
-func NewAuthorize(log *log.Logger, provider *OAuth2Provider, callbackPath string) *AuthorizeHandler {
+func NewAuthorizeHandler(log *log.Logger, provider *OAuth2Provider, callbackPath string) *AuthorizeHandler {
 	return &AuthorizeHandler{log, provider, callbackPath}
 }
 
@@ -52,7 +52,7 @@ type AuthorizeCodeHandler struct {
 	log *log.Logger
 }
 
-func NewAuthorizeCode(log *log.Logger) *AuthorizeCodeHandler {
+func NewAuthorizeCodeHandler(log *log.Logger) *AuthorizeCodeHandler {
 	return &AuthorizeCodeHandler{log}
 }
 
@@ -66,7 +66,10 @@ func (h *AuthorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	q := r.URL.Query()
 	q.Del("redirect_uri")
 
-	redirectURI := fmt.Sprintf("%s?%s", cr.RedirectUri, q.Encode())
+	redirectURI := cr.RedirectUri
+	if len(q) > 0 {
+		redirectURI += "&" + q.Encode()
+	}
 
 	w.Header().Add("Location", redirectURI)
 	w.WriteHeader(http.StatusFound)
@@ -81,15 +84,15 @@ func readChallengeCookie(r *http.Request) string {
 	return challenge
 }
 
-type AccessToken struct {
+type AccessTokenHandler struct {
 	log *log.Logger
 }
 
-func NewAccessToken(log *log.Logger) *AccessToken {
-	return &AccessToken{log}
+func NewAccessTokenHandler(log *log.Logger) *AccessTokenHandler {
+	return &AccessTokenHandler{log}
 }
 
-func (h *AccessToken) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (h *AccessTokenHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	h.log.Print("AccessToken handler")
 	rw.Write([]byte("access_token"))
 }
