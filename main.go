@@ -50,8 +50,8 @@ func main() {
 }
 
 func registerRoutes(mux *http.ServeMux, cfg *Config, log *log.Logger) {
-	mux.Handle("/authorize", PrometheusMiddleware(NewAuthorizeHandler(log, cfg.Provider, "/code")))
-	mux.Handle("/access_token", PrometheusMiddleware(NewAccessTokenHandler(log)))
-	mux.Handle("/code", PrometheusMiddleware(NewAuthorizeCodeHandler(log)))
+	mux.Handle("/authorize", instrument(NewAuthorizeHandler(log, cfg.Provider, "/code")))
+	mux.Handle("/access_token", instrument(NewAccessTokenHandler(log)))
+	mux.Handle("/code", instrument(NewAuthorizeCodeHandler(log)))
 	mux.Handle("/metrics", promhttp.Handler())
 }

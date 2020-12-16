@@ -12,17 +12,17 @@ const (
 	challengeCookieMaxAge = 300
 )
 
-type AuthorizeHandler struct {
+type authorizeHandler struct {
 	log          *log.Logger
 	provider     *OAuth2Provider
 	callbackPath string
 }
 
-func NewAuthorizeHandler(log *log.Logger, provider *OAuth2Provider, callbackPath string) *AuthorizeHandler {
-	return &AuthorizeHandler{log, provider, callbackPath}
+func NewAuthorizeHandler(log *log.Logger, provider *OAuth2Provider, callbackPath string) *authorizeHandler {
+	return &authorizeHandler{log, provider, callbackPath}
 }
 
-func (h *AuthorizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *authorizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ar := &AuthorizeRequest{}
 	ar.FromQueryParams(r)
 
@@ -48,15 +48,15 @@ func setChallengeCookie(w http.ResponseWriter, challenge string) {
 	http.SetCookie(w, &cookie)
 }
 
-type AuthorizeCodeHandler struct {
+type authorizeCodeHandler struct {
 	log *log.Logger
 }
 
-func NewAuthorizeCodeHandler(log *log.Logger) *AuthorizeCodeHandler {
-	return &AuthorizeCodeHandler{log}
+func NewAuthorizeCodeHandler(log *log.Logger) *authorizeCodeHandler {
+	return &authorizeCodeHandler{log}
 }
 
-func (h *AuthorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cr := &AuthorizeCodeRequest{}
 	cr.FromQueryParams(r)
 	cc := readChallengeCookie(r)
@@ -84,15 +84,15 @@ func readChallengeCookie(r *http.Request) string {
 	return challenge
 }
 
-type AccessTokenHandler struct {
+type accessTokenHandler struct {
 	log *log.Logger
 }
 
-func NewAccessTokenHandler(log *log.Logger) *AccessTokenHandler {
-	return &AccessTokenHandler{log}
+func NewAccessTokenHandler(log *log.Logger) *accessTokenHandler {
+	return &accessTokenHandler{log}
 }
 
-func (h *AccessTokenHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (h *accessTokenHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	h.log.Print("AccessToken handler")
 	rw.Write([]byte("access_token"))
 }
