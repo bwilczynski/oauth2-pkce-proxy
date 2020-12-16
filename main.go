@@ -9,12 +9,14 @@ import (
 	"os/signal"
 	"time"
 
+	h "github.com/bwilczynski/oauth2-pkce-proxy/handlers"
+	m "github.com/bwilczynski/oauth2-pkce-proxy/models"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
 	log := log.New(os.Stdout, "", log.LstdFlags)
-	cfg := &Config{}
+	cfg := &m.Config{}
 	cfg.ReadFromEnv(log)
 
 	mux := http.NewServeMux()
@@ -49,9 +51,9 @@ func main() {
 	server.Shutdown(ctx)
 }
 
-func registerRoutes(mux *http.ServeMux, cfg *Config, log *log.Logger) {
-	mux.Handle("/authorize", instrument(NewAuthorizeHandler(log, cfg.Provider, "/code")))
-	mux.Handle("/access_token", instrument(NewAccessTokenHandler(log)))
-	mux.Handle("/code", instrument(NewAuthorizeCodeHandler(log)))
+func registerRoutes(mux *http.ServeMux, cfg *m.Config, log *log.Logger) {
+	mux.Handle("/authorize", h.WithPrometheus(h.NewAuthorizeHandler(log, cfg.Provider, "/code")))
+	mux.Handle("/access_token", h.WithPrometheus(h.NewAccessTokenHandler(log)))
+	mux.Handle("/code", h.WithPrometheus(h.NewAuthorizeCodeHandler(log)))
 	mux.Handle("/metrics", promhttp.Handler())
 }

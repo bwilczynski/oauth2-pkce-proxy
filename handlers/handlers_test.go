@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"os"
 	"testing"
+
+	"github.com/bwilczynski/oauth2-pkce-proxy/models"
 )
 
 var (
@@ -50,7 +52,7 @@ func TestAuthorizeCodeHandler(t *testing.T) {
 
 func createAuthorizeHandler() *authorizeHandler {
 	l := log.New(os.Stdout, "", log.LstdFlags)
-	p := &OAuth2Provider{authorizeURL, tokenURL}
+	p := &models.OAuth2Provider{AuthorizeURL: authorizeURL, TokenURL: tokenURL}
 
 	return NewAuthorizeHandler(l, p, "")
 }

@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"net/http"
@@ -27,7 +27,7 @@ var (
 	}, []string{"code", "method", "path"})
 )
 
-func instrument(next http.Handler) http.Handler {
+func WithPrometheus(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		wi := &responseWriterInterceptor{
 			statusCode:     http.StatusOK,
