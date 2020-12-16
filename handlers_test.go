@@ -48,14 +48,14 @@ func TestAuthorizeCodeHandler(t *testing.T) {
 	}
 }
 
-func createAuthorizeHandler() *AuthorizeHandler {
+func createAuthorizeHandler() *authorizeHandler {
 	l := log.New(os.Stdout, "", log.LstdFlags)
 	p := &OAuth2Provider{authorizeURL, tokenURL}
 
 	return NewAuthorizeHandler(l, p, "")
 }
 
-func createAuthorizeCodeHandler() *AuthorizeCodeHandler {
+func createAuthorizeCodeHandler() *authorizeCodeHandler {
 	l := log.New(os.Stdout, "", log.LstdFlags)
 
 	return NewAuthorizeCodeHandler(l)

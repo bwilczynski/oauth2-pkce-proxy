@@ -94,5 +94,8 @@ func NewAccessTokenHandler(log *log.Logger) *accessTokenHandler {
 
 func (h *accessTokenHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	h.log.Print("AccessToken handler")
+
+	// TODO: validate received code challenge with code verifier
+
 	rw.Write([]byte("access_token"))
 }
