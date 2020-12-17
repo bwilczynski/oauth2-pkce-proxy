@@ -61,6 +61,7 @@ func createAuthorizeHandler() *authorizeHandler {
 
 func createAuthorizeCodeHandler() *authorizeCodeHandler {
 	l := log.New(os.Stdout, "", log.LstdFlags)
+	store := NewInMemoryChallengeStore()
 
-	return NewAuthorizeCodeHandler(l)
+	return NewAuthorizeCodeHandler(l, store)
 }

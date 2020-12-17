@@ -52,8 +52,10 @@ func main() {
 }
 
 func registerRoutes(mux *http.ServeMux, cfg *m.Config, log *log.Logger) {
+	store := h.NewInMemoryChallengeStore()
+
 	mux.Handle("/authorize", h.WithPrometheus(h.NewAuthorizeHandler(log, cfg.Provider, "/code")))
-	mux.Handle("/access_token", h.WithPrometheus(h.NewAccessTokenHandler(log)))
-	mux.Handle("/code", h.WithPrometheus(h.NewAuthorizeCodeHandler(log)))
+	mux.Handle("/access_token", h.WithPrometheus(h.NewAccessTokenHandler(log, store)))
+	mux.Handle("/code", h.WithPrometheus(h.NewAuthorizeCodeHandler(log, store)))
 	mux.Handle("/metrics", promhttp.Handler())
 }

@@ -5,19 +5,20 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/bwilczynski/oauth2-pkce-proxy/models"
+	m "github.com/bwilczynski/oauth2-pkce-proxy/models"
 )
 
 type authorizeCodeHandler struct {
-	log *log.Logger
+	log   *log.Logger
+	store ChallengeStore
 }
 
-func NewAuthorizeCodeHandler(log *log.Logger) *authorizeCodeHandler {
-	return &authorizeCodeHandler{log}
+func NewAuthorizeCodeHandler(log *log.Logger, store ChallengeStore) *authorizeCodeHandler {
+	return &authorizeCodeHandler{log, store}
 }
 
 func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cr := &models.AuthorizeCodeRequest{}
+	cr := &m.AuthorizeCodeRequest{}
 	cr.FromQueryParams(r)
 
 	if res, ok := cr.Validate(); !ok {
@@ -27,6 +28,9 @@ func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	cc := readChallengeCookie(r)
+
+	h.store.Write(cr.Code, m.CodeVerifier(cc))
+
 	h.log.Printf("AuthorizeCode handler called: %#v, cc: %s", cr, cc)
 
 	q := r.URL.Query()
