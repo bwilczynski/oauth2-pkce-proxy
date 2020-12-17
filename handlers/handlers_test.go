@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/bwilczynski/oauth2-pkce-proxy/models"
@@ -35,9 +36,9 @@ func TestAuthorizeHandler(t *testing.T) {
 }
 
 func TestAuthorizeCodeHandler(t *testing.T) {
-	ru := "http://callback"
 	rr := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", fmt.Sprintf("/code?redirect_uri=%s", ru), nil)
+	cr := &models.AuthorizeCodeRequest{Code: "whatever", RedirectUri: "http://callback"}
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/code?%s", cr.URLQuery()), nil)
 	h := createAuthorizeCodeHandler()
 
 	h.ServeHTTP(rr, r)
@@ -46,8 +47,8 @@ func TestAuthorizeCodeHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 			status, http.StatusFound)
 	}
-	if loc := rr.Result().Header.Get("Location"); loc != ru {
-		t.Errorf("handler returned wrong Location header: got %v want %v", loc, ru)
+	if loc := rr.Result().Header.Get("Location"); strings.Index(loc, cr.RedirectUri) != 0 {
+		t.Errorf("handler returned Location header not containing %v: got %v", cr.RedirectUri, loc)
 	}
 }
 

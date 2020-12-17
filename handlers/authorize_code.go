@@ -19,8 +19,14 @@ func NewAuthorizeCodeHandler(log *log.Logger) *authorizeCodeHandler {
 func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cr := &models.AuthorizeCodeRequest{}
 	cr.FromQueryParams(r)
-	cc := readChallengeCookie(r)
 
+	if res, ok := cr.Validate(); !ok {
+		h.log.Printf("Bad request: %#v", res)
+		writeError(w, res)
+		return
+	}
+
+	cc := readChallengeCookie(r)
 	h.log.Printf("AuthorizeCode handler called: %#v, cc: %s", cr, cc)
 
 	q := r.URL.Query()

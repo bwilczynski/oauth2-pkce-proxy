@@ -1,9 +1,8 @@
 package models
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
+	"net/url"
 )
 
 const (
@@ -41,21 +40,22 @@ func (ar *AuthorizeRequest) FromQueryParams(r *http.Request) {
 }
 
 func (ar *AuthorizeRequest) URLQuery() string {
-	qp := []string{}
+	q := url.Values{}
+
 	if ar.ClientId != "" {
-		qp = append(qp, fmt.Sprintf("client_id=%s", ar.ClientId))
+		q.Add("client_id", ar.ClientId)
 	}
 	if ar.CodeChallenge != "" {
-		qp = append(qp, fmt.Sprintf("code_challenge=%s", ar.CodeChallenge))
+		q.Add("code_challenge", ar.CodeChallenge)
 	}
 	if ar.CodeChallengeMethod != "" {
-		qp = append(qp, fmt.Sprintf("code_challenge_method=%s", ar.CodeChallengeMethod))
+		q.Add("code_challenge_method", ar.CodeChallengeMethod)
 	}
 	if ar.RedirectUri != "" {
-		qp = append(qp, fmt.Sprintf("redirect_uri=%s", ar.RedirectUri))
+		q.Add("redirect_uri", ar.RedirectUri)
 	}
 
-	return strings.Join(qp, "&")
+	return q.Encode()
 }
 
 func (ar *AuthorizeRequest) Validate() (res *ValidationResult, ok bool) {
@@ -84,6 +84,38 @@ func (ar *AuthorizeRequest) Validate() (res *ValidationResult, ok bool) {
 type AuthorizeCodeRequest struct {
 	Code        string
 	RedirectUri string
+}
+
+func (ar *AuthorizeCodeRequest) URLQuery() string {
+	q := url.Values{}
+	if ar.Code != "" {
+		q.Add("code", ar.Code)
+	}
+	if ar.RedirectUri != "" {
+		q.Add("redirect_uri", ar.RedirectUri)
+	}
+
+	return q.Encode()
+}
+
+func (cr *AuthorizeCodeRequest) Validate() (res *ValidationResult, ok bool) {
+	errors := []ValidationError{}
+
+	if cr.Code == "" {
+		errors = append(errors, ValidationError{FieldName: "code", Message: "Required field"})
+	}
+	if cr.RedirectUri == "" {
+		errors = append(errors, ValidationError{FieldName: "redirect_uri", Message: "Required field"})
+	}
+
+	if len(errors) > 0 {
+		ok = false
+		res = &ValidationResult{Message: "Bad request", Errors: errors}
+		return
+	}
+
+	ok = true
+	return
 }
 
 func (cr *AuthorizeCodeRequest) FromQueryParams(r *http.Request) {
