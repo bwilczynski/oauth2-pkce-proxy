@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,9 +26,11 @@ func (h *authorizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	h.log.Printf("Authorize handler called: %#v", ar)
 
-	if ar.CodeChallengeMethod != models.CodeChallengeMethodS256 {
-		h.log.Printf("Code challenge method %v not supported", ar.CodeChallengeMethod)
-		http.Error(w, "Code challenge method not supported", http.StatusBadRequest)
+	if res, ok := ar.Validate(); !ok {
+		h.log.Printf("Bad request: %#v", res)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
 		return
 	}
 

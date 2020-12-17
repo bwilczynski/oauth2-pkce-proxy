@@ -19,7 +19,8 @@ var (
 
 func TestAuthorizeHandler(t *testing.T) {
 	rr := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/authorize", nil)
+	ar := &models.AuthorizeRequest{CodeChallenge: "whatever", ClientId: "whatever", RedirectUri: "whatever"}
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/authorize?%s", ar.URLQuery()), nil)
 	h := createAuthorizeHandler()
 
 	h.ServeHTTP(rr, r)
