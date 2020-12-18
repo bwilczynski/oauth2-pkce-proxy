@@ -48,7 +48,7 @@ func (ar *AuthorizeRequest) URLQuery() string {
 	return q.Encode()
 }
 
-func (ar *AuthorizeRequest) Validate() (res *ValidationResult, ok bool) {
+func (ar *AuthorizeRequest) Validate() error {
 	return Validate(
 		RequiredField{Name: "client_id", Value: &ar.ClientId},
 		RequiredField{Name: "code_challenge", Value: &ar.CodeChallenge},
@@ -73,7 +73,7 @@ func (ar *AuthorizeCodeRequest) URLQuery() string {
 	return q.Encode()
 }
 
-func (cr *AuthorizeCodeRequest) Validate() (res *ValidationResult, ok bool) {
+func (cr *AuthorizeCodeRequest) Validate() error {
 	return Validate(
 		RequiredField{Name: "code", Value: &cr.Code},
 		RequiredField{Name: "redirect_uri", Value: &cr.RedirectUri},

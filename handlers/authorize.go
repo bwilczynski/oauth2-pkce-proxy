@@ -25,9 +25,9 @@ func (h *authorizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	h.log.Printf("Authorize handler called: %#v", ar)
 
-	if res, ok := ar.Validate(); !ok {
-		h.log.Printf("Bad request: %#v", res)
-		writeError(w, res)
+	if err := ar.Validate(); err != nil {
+		h.log.Printf("Bad request: %#v", err)
+		writeError(w, err)
 		return
 	}
 

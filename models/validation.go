@@ -1,14 +1,14 @@
 package models
 
 type (
-	ValidationError struct {
+	FieldError struct {
 		FieldName string `json:"fieldName"`
 		Message   string `json:"message"`
 	}
 
-	ValidationResult struct {
-		Message string            `json:"message"`
-		Errors  []ValidationError `json:"errors"`
+	ValidationError struct {
+		Message string       `json:"message"`
+		Errors  []FieldError `json:"errors"`
 	}
 
 	RequiredField struct {
@@ -17,21 +17,22 @@ type (
 	}
 )
 
-func Validate(fields ...interface{}) (res *ValidationResult, ok bool) {
-	errors := []ValidationError{}
+func (vr *ValidationError) Error() string {
+	return vr.Message
+}
+
+func Validate(fields ...interface{}) error {
+	errors := []FieldError{}
 
 	for _, f := range fields {
 		if rf, ok := f.(RequiredField); ok && *rf.Value == "" {
-			errors = append(errors, ValidationError{FieldName: rf.Name, Message: "Required field"})
+			errors = append(errors, FieldError{FieldName: rf.Name, Message: "Required field"})
 		}
 	}
 
 	if len(errors) > 0 {
-		ok = false
-		res = &ValidationResult{Message: "Bad request", Errors: errors}
-		return
+		return &ValidationError{Message: "Bad request", Errors: errors}
 	}
 
-	ok = true
-	return
+	return nil
 }

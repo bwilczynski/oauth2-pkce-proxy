@@ -12,10 +12,12 @@ const (
 	challengeCookieMaxAge = 300
 )
 
-func writeError(w http.ResponseWriter, res *m.ValidationResult) {
-	w.Header().Set("Content-Type", "application/json")
+func writeError(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusBadRequest)
-	json.NewEncoder(w).Encode(res)
+	if verr, ok := err.(*m.ValidationError); ok {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(verr)
+	}
 }
 
 type ChallengeStore interface {

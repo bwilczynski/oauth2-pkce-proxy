@@ -21,9 +21,9 @@ func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cr := &m.AuthorizeCodeRequest{}
 	cr.FromQueryParams(r)
 
-	if res, ok := cr.Validate(); !ok {
-		h.log.Printf("Bad request: %#v", res)
-		writeError(w, res)
+	if err := cr.Validate(); err != nil {
+		h.log.Printf("Bad request: %#v", err)
+		writeError(w, err)
 		return
 	}
 
