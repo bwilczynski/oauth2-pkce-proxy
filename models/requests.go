@@ -9,16 +9,6 @@ const (
 	CodeChallengeMethodS256 = "S256"
 )
 
-type ValidationError struct {
-	FieldName string `json:"fieldName"`
-	Message   string `json:"message"`
-}
-
-type ValidationResult struct {
-	Message string            `json:"message"`
-	Errors  []ValidationError `json:"errors"`
-}
-
 type AuthorizeRequest struct {
 	ClientId            string
 	CodeChallenge       string
@@ -59,26 +49,11 @@ func (ar *AuthorizeRequest) URLQuery() string {
 }
 
 func (ar *AuthorizeRequest) Validate() (res *ValidationResult, ok bool) {
-	errors := []ValidationError{}
-
-	if ar.ClientId == "" {
-		errors = append(errors, ValidationError{FieldName: "client_id", Message: "Required field"})
-	}
-	if ar.CodeChallenge == "" {
-		errors = append(errors, ValidationError{FieldName: "code_challenge", Message: "Required field"})
-	}
-	if ar.RedirectUri == "" {
-		errors = append(errors, ValidationError{FieldName: "redirect_uri", Message: "Required field"})
-	}
-
-	if len(errors) > 0 {
-		ok = false
-		res = &ValidationResult{Message: "Bad request", Errors: errors}
-		return
-	}
-
-	ok = true
-	return
+	return Validate(
+		RequiredField{Name: "client_id", Value: &ar.ClientId},
+		RequiredField{Name: "code_challenge", Value: &ar.CodeChallenge},
+		RequiredField{Name: "redirect_uri", Value: &ar.RedirectUri},
+	)
 }
 
 type AuthorizeCodeRequest struct {
@@ -99,23 +74,10 @@ func (ar *AuthorizeCodeRequest) URLQuery() string {
 }
 
 func (cr *AuthorizeCodeRequest) Validate() (res *ValidationResult, ok bool) {
-	errors := []ValidationError{}
-
-	if cr.Code == "" {
-		errors = append(errors, ValidationError{FieldName: "code", Message: "Required field"})
-	}
-	if cr.RedirectUri == "" {
-		errors = append(errors, ValidationError{FieldName: "redirect_uri", Message: "Required field"})
-	}
-
-	if len(errors) > 0 {
-		ok = false
-		res = &ValidationResult{Message: "Bad request", Errors: errors}
-		return
-	}
-
-	ok = true
-	return
+	return Validate(
+		RequiredField{Name: "code", Value: &cr.Code},
+		RequiredField{Name: "redirect_uri", Value: &cr.RedirectUri},
+	)
 }
 
 func (cr *AuthorizeCodeRequest) FromQueryParams(r *http.Request) {
