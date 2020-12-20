@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 
 	m "github.com/bwilczynski/oauth2-pkce-proxy/models"
 )
@@ -26,17 +27,23 @@ type ChallengeStore interface {
 }
 
 type inMemoryChallengeStore struct {
+	sync.Mutex
 	values map[string]m.CodeVerifier
 }
 
-func NewInMemoryChallengeStore() ChallengeStore {
+func NewInMemoryChallengeStore() *inMemoryChallengeStore {
 	return &inMemoryChallengeStore{values: make(map[string]m.CodeVerifier)}
 }
 
 func (ms *inMemoryChallengeStore) Write(code string, verifier m.CodeVerifier) {
+	ms.Lock()
 	ms.values[code] = verifier
+	ms.Unlock()
 }
 
 func (ms *inMemoryChallengeStore) Get(code string) m.CodeVerifier {
-	return ms.values[code]
+	ms.Lock()
+	res := ms.values[code]
+	ms.Unlock()
+	return res
 }
