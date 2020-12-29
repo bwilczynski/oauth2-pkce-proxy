@@ -22,26 +22,26 @@ func writeError(w http.ResponseWriter, err error) {
 }
 
 type ChallengeStore interface {
-	Write(code string, verifier m.CodeVerifier)
-	Get(code string) m.CodeVerifier
+	Write(code string, challenge string)
+	Get(code string) string
 }
 
 type inMemoryChallengeStore struct {
 	sync.Mutex
-	values map[string]m.CodeVerifier
+	values map[string]string
 }
 
 func NewInMemoryChallengeStore() *inMemoryChallengeStore {
-	return &inMemoryChallengeStore{values: make(map[string]m.CodeVerifier)}
+	return &inMemoryChallengeStore{values: make(map[string]string)}
 }
 
-func (ms *inMemoryChallengeStore) Write(code string, verifier m.CodeVerifier) {
+func (ms *inMemoryChallengeStore) Write(code string, challenge string) {
 	ms.Lock()
-	ms.values[code] = verifier
+	ms.values[code] = challenge
 	ms.Unlock()
 }
 
-func (ms *inMemoryChallengeStore) Get(code string) m.CodeVerifier {
+func (ms *inMemoryChallengeStore) Get(code string) string {
 	ms.Lock()
 	res := ms.values[code]
 	ms.Unlock()

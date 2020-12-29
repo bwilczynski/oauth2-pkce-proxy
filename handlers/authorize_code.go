@@ -27,11 +27,10 @@ func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cc := readChallengeCookie(r)
+	challenge := readChallengeCookie(r)
+	h.store.Write(cr.Code, challenge)
 
-	h.store.Write(cr.Code, m.CodeVerifier(cc))
-
-	h.log.Printf("AuthorizeCode handler called: %#v, cc: %s", cr, cc)
+	h.log.Printf("AuthorizeCode handler called: %#v, cc: %s", cr, challenge)
 
 	q := r.URL.Query()
 	q.Del("redirect_uri")

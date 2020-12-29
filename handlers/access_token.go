@@ -25,14 +25,19 @@ func (h *accessTokenHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 
 	h.log.Printf("AccessToken handler called: %#v", tr)
 
-	// TODO: validate received code challenge with code verifier
-	// h.store.Get(code)
+	challenge := h.store.Get(tr.Code)
+	if ok := tr.CodeVerifier.Verify(challenge); !ok {
+		h.log.Printf("Code verifier not valid: %v for challenge: %v", tr.CodeVerifier, challenge)
+		http.Error(rw, "Code verifier not valid", http.StatusForbidden)
+		return
+	}
 
 	fd := formData(r.Form)
 	fd.Set("client_secret", h.provider.ClientSecret)
 	resp, err := http.PostForm(h.provider.TokenURL.String(), fd)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	defer resp.Body.Close()
 

@@ -91,7 +91,7 @@ type AccessTokenRequest struct {
 	ClientId     string
 	Code         string
 	GrantType    string
-	CodeVerifier string
+	CodeVerifier CodeVerifier
 }
 
 func (tr *AccessTokenRequest) FromQueryParams(r *http.Request) {
@@ -100,5 +100,5 @@ func (tr *AccessTokenRequest) FromQueryParams(r *http.Request) {
 	tr.ClientId = r.Form.Get("client_id")
 	tr.Code = r.Form.Get("code")
 	tr.GrantType = r.Form.Get("grant_type")
-	tr.CodeVerifier = r.Form.Get("code_verifier")
+	tr.CodeVerifier = CodeVerifier(r.Form.Get("code_verifier"))
 }
