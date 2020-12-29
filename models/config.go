@@ -15,6 +15,8 @@ type Config struct {
 type OAuth2Provider struct {
 	AuthorizeURL *url.URL
 	TokenURL     *url.URL
+	ClientId     string
+	ClientSecret string
 }
 
 func (cfg *Config) ReadFromEnv(log *log.Logger) {
@@ -33,5 +35,7 @@ func (cfg *Config) ReadFromEnv(log *log.Logger) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	cfg.Provider = &OAuth2Provider{authURL, tokenURL}
+	clientId, clientSecret := os.Getenv("PKCE_PROXY_OAUTH2_CLIENT_ID"), os.Getenv("PKCE_PROXY_OAUTH2_CLIENT_SECRET")
+
+	cfg.Provider = &OAuth2Provider{authURL, tokenURL, clientId, clientSecret}
 }

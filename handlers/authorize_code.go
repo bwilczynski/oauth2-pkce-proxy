@@ -36,12 +36,10 @@ func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	q := r.URL.Query()
 	q.Del("redirect_uri")
 
-	redirectURI := cr.RedirectUri
-	if len(q) > 0 {
-		redirectURI += "&" + q.Encode()
-	}
+	redirectURI, _ := url.Parse(cr.RedirectUri)
+	redirectURI.RawQuery = q.Encode()
 
-	w.Header().Add("Location", redirectURI)
+	w.Header().Add("Location", redirectURI.String())
 	w.WriteHeader(http.StatusFound)
 }
 

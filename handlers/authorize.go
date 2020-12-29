@@ -6,21 +6,21 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/bwilczynski/oauth2-pkce-proxy/models"
+	m "github.com/bwilczynski/oauth2-pkce-proxy/models"
 )
 
 type authorizeHandler struct {
 	log          *log.Logger
-	provider     *models.OAuth2Provider
+	provider     *m.OAuth2Provider
 	callbackPath string
 }
 
-func NewAuthorizeHandler(log *log.Logger, provider *models.OAuth2Provider, callbackPath string) *authorizeHandler {
+func NewAuthorizeHandler(log *log.Logger, provider *m.OAuth2Provider, callbackPath string) *authorizeHandler {
 	return &authorizeHandler{log, provider, callbackPath}
 }
 
 func (h *authorizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ar := &models.AuthorizeRequest{}
+	ar := &m.AuthorizeRequest{}
 	ar.FromQueryParams(r)
 
 	h.log.Printf("Authorize handler called: %#v", ar)
