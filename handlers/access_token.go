@@ -2,32 +2,34 @@ package handlers
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
 	m "github.com/bwilczynski/oauth2-pkce-proxy/models"
+	"github.com/rs/zerolog"
 )
 
 type accessTokenHandler struct {
-	log      *log.Logger
+	logger   *zerolog.Logger
 	store    ChallengeStore
 	provider *m.OAuth2Provider
 }
 
-func NewAccessTokenHandler(log *log.Logger, store ChallengeStore, provider *m.OAuth2Provider) *accessTokenHandler {
-	return &accessTokenHandler{log, store, provider}
+func NewAccessTokenHandler(logger *zerolog.Logger, store ChallengeStore, provider *m.OAuth2Provider) *accessTokenHandler {
+	return &accessTokenHandler{logger, store, provider}
 }
 
 func (h *accessTokenHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	tr := &m.AccessTokenRequest{}
 	tr.FromQueryParams(r)
 
-	h.log.Printf("AccessToken handler called: %#v", tr)
-
 	challenge := h.store.Get(tr.Code)
 	if ok := tr.CodeVerifier.Verify(challenge); !ok {
-		h.log.Printf("Code verifier not valid: %v for challenge: %v", tr.CodeVerifier, challenge)
+		h.logger.Error().
+			Str("code_verifier", string(tr.CodeVerifier)).
+			Str("challenge", challenge).
+			Msg("code verifier not valid")
+
 		http.Error(rw, "Code verifier not valid", http.StatusForbidden)
 		return
 	}

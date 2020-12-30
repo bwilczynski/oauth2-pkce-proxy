@@ -2,15 +2,14 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/bwilczynski/oauth2-pkce-proxy/models"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,10 +31,10 @@ func TestAuthorizeHandler(t *testing.T) {
 }
 
 func createAuthorizeHandler() *authorizeHandler {
-	l := log.New(os.Stdout, "", log.LstdFlags)
+	l := zerolog.Nop()
 	p := &models.OAuth2Provider{AuthorizeURL: authorizeURL, TokenURL: tokenURL}
 
-	return NewAuthorizeHandler(l, p, "")
+	return NewAuthorizeHandler(&l, p, "")
 }
 
 func TestAuthorizeCodeHandler(t *testing.T) {
@@ -51,8 +50,8 @@ func TestAuthorizeCodeHandler(t *testing.T) {
 }
 
 func createAuthorizeCodeHandler() *authorizeCodeHandler {
-	l := log.New(os.Stdout, "", log.LstdFlags)
+	l := zerolog.Nop()
 	store := NewInMemoryChallengeStore()
 
-	return NewAuthorizeCodeHandler(l, store)
+	return NewAuthorizeCodeHandler(&l, store)
 }

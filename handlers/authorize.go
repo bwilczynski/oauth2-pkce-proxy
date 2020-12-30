@@ -2,31 +2,29 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 
 	m "github.com/bwilczynski/oauth2-pkce-proxy/models"
+	"github.com/rs/zerolog"
 )
 
 type authorizeHandler struct {
-	log          *log.Logger
+	logger       *zerolog.Logger
 	provider     *m.OAuth2Provider
 	callbackPath string
 }
 
-func NewAuthorizeHandler(log *log.Logger, provider *m.OAuth2Provider, callbackPath string) *authorizeHandler {
-	return &authorizeHandler{log, provider, callbackPath}
+func NewAuthorizeHandler(logger *zerolog.Logger, provider *m.OAuth2Provider, callbackPath string) *authorizeHandler {
+	return &authorizeHandler{logger, provider, callbackPath}
 }
 
 func (h *authorizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ar := &m.AuthorizeRequest{}
 	ar.FromQueryParams(r)
 
-	h.log.Printf("Authorize handler called: %#v", ar)
-
 	if err := ar.Validate(); err != nil {
-		h.log.Printf("Bad request: %#v", err)
+		h.logger.Error().Err(err).Msg("")
 		writeError(w, err)
 		return
 	}

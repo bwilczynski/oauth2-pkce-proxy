@@ -1,20 +1,20 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"net/url"
 
 	m "github.com/bwilczynski/oauth2-pkce-proxy/models"
+	"github.com/rs/zerolog"
 )
 
 type authorizeCodeHandler struct {
-	log   *log.Logger
-	store ChallengeStore
+	logger *zerolog.Logger
+	store  ChallengeStore
 }
 
-func NewAuthorizeCodeHandler(log *log.Logger, store ChallengeStore) *authorizeCodeHandler {
-	return &authorizeCodeHandler{log, store}
+func NewAuthorizeCodeHandler(logger *zerolog.Logger, store ChallengeStore) *authorizeCodeHandler {
+	return &authorizeCodeHandler{logger, store}
 }
 
 func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -22,15 +22,13 @@ func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cr.FromQueryParams(r)
 
 	if err := cr.Validate(); err != nil {
-		h.log.Printf("Bad request: %#v", err)
+		h.logger.Error().Err(err).Msg("")
 		writeError(w, err)
 		return
 	}
 
 	challenge := readChallengeCookie(r)
 	h.store.Write(cr.Code, challenge)
-
-	h.log.Printf("AuthorizeCode handler called: %#v, cc: %s", cr, challenge)
 
 	q := r.URL.Query()
 	q.Del("redirect_uri")

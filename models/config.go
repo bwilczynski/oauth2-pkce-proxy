@@ -1,7 +1,6 @@
 package models
 
 import (
-	"log"
 	"net/url"
 	"os"
 	"strconv"
@@ -19,7 +18,7 @@ type OAuth2Provider struct {
 	ClientSecret string
 }
 
-func (cfg *Config) ReadFromEnv(log *log.Logger) {
+func (cfg *Config) ReadFromEnv() error {
 	if lp := os.Getenv("PKCE_PROXY_PORT"); lp != "" {
 		cfg.ListenPort, _ = strconv.Atoi(lp)
 	}
@@ -29,13 +28,15 @@ func (cfg *Config) ReadFromEnv(log *log.Logger) {
 
 	authURL, err := url.Parse(os.Getenv("PKCE_PROXY_OAUTH2_AUTH_URL"))
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	tokenURL, err := url.Parse(os.Getenv("PKCE_PROXY_OAUTH2_TOKEN_URL"))
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	clientId, clientSecret := os.Getenv("PKCE_PROXY_OAUTH2_CLIENT_ID"), os.Getenv("PKCE_PROXY_OAUTH2_CLIENT_SECRET")
 
 	cfg.Provider = &OAuth2Provider{authURL, tokenURL, clientId, clientSecret}
+
+	return nil
 }

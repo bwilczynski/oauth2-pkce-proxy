@@ -12,17 +12,22 @@ import (
 	h "github.com/bwilczynski/oauth2-pkce-proxy/handlers"
 	m "github.com/bwilczynski/oauth2-pkce-proxy/models"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
-	log := log.New(os.Stdout, "", log.LstdFlags)
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	logger := zerolog.New(output).With().Timestamp().Logger()
+
 	cfg := &m.Config{}
-	cfg.ReadFromEnv(log)
+	if err := cfg.ReadFromEnv(); err != nil {
+		log.Fatal(err)
+	}
 
 	mux := mux.NewRouter()
-	registerRoutes(mux, cfg, log)
+	registerRoutes(mux, cfg, &logger)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.ListenPort),
@@ -53,13 +58,14 @@ func main() {
 	server.Shutdown(ctx)
 }
 
-func registerRoutes(mux *mux.Router, cfg *m.Config, log *log.Logger) {
+func registerRoutes(mux *mux.Router, cfg *m.Config, logger *zerolog.Logger) {
 	store := h.NewInMemoryChallengeStore()
 
-	mux.Handle("/authorize", h.NewAuthorizeHandler(log, cfg.Provider, "/code")).Methods("GET")
-	mux.Handle("/token", h.NewAccessTokenHandler(log, store, cfg.Provider)).Methods("POST")
-	mux.Handle("/code", h.NewAuthorizeCodeHandler(log, store)).Methods("GET")
+	mux.Handle("/authorize", h.NewAuthorizeHandler(logger, cfg.Provider, "/code")).Methods("GET")
+	mux.Handle("/token", h.NewAccessTokenHandler(logger, store, cfg.Provider)).Methods("POST")
+	mux.Handle("/code", h.NewAuthorizeCodeHandler(logger, store)).Methods("GET")
 	mux.Handle("/metrics", promhttp.Handler())
 
+	mux.Use(h.LoggingMiddleware(logger))
 	mux.Use(h.PrometheusMiddleware)
 }
