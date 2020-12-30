@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/bwilczynski/oauth2-pkce-proxy/models"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -26,13 +27,15 @@ func TestAuthorizeHandler(t *testing.T) {
 
 	h.ServeHTTP(rr, r)
 
-	if status := rr.Code; status != http.StatusFound {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusFound)
-	}
-	if loc := rr.Result().Header.Get("Location"); loc == "" {
-		t.Errorf("handler returned should return Location header")
-	}
+	assert.Equal(t, http.StatusFound, rr.Code)
+	assert.NotEqual(t, "", rr.Result().Header.Get("Location"))
+}
+
+func createAuthorizeHandler() *authorizeHandler {
+	l := log.New(os.Stdout, "", log.LstdFlags)
+	p := &models.OAuth2Provider{AuthorizeURL: authorizeURL, TokenURL: tokenURL}
+
+	return NewAuthorizeHandler(l, p, "")
 }
 
 func TestAuthorizeCodeHandler(t *testing.T) {
@@ -43,20 +46,8 @@ func TestAuthorizeCodeHandler(t *testing.T) {
 
 	h.ServeHTTP(rr, r)
 
-	if status := rr.Code; status != http.StatusFound {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusFound)
-	}
-	if loc := rr.Result().Header.Get("Location"); strings.Index(loc, cr.RedirectUri) != 0 {
-		t.Errorf("handler returned Location header not containing %v: got %v", cr.RedirectUri, loc)
-	}
-}
-
-func createAuthorizeHandler() *authorizeHandler {
-	l := log.New(os.Stdout, "", log.LstdFlags)
-	p := &models.OAuth2Provider{AuthorizeURL: authorizeURL, TokenURL: tokenURL}
-
-	return NewAuthorizeHandler(l, p, "")
+	assert.Equal(t, http.StatusFound, rr.Code)
+	assert.True(t, strings.Index(rr.Result().Header.Get("Location"), cr.RedirectUri) == 0)
 }
 
 func createAuthorizeCodeHandler() *authorizeCodeHandler {

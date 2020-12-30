@@ -27,7 +27,7 @@ var (
 	}, []string{"code", "method", "path"})
 )
 
-func WithPrometheus(next http.Handler) http.Handler {
+func PrometheusMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		wi := &responseWriterInterceptor{
 			statusCode:     http.StatusOK,

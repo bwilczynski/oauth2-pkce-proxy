@@ -12,6 +12,8 @@ import (
 	h "github.com/bwilczynski/oauth2-pkce-proxy/handlers"
 	m "github.com/bwilczynski/oauth2-pkce-proxy/models"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -19,7 +21,7 @@ func main() {
 	cfg := &m.Config{}
 	cfg.ReadFromEnv(log)
 
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 	registerRoutes(mux, cfg, log)
 
 	server := &http.Server{
@@ -51,11 +53,13 @@ func main() {
 	server.Shutdown(ctx)
 }
 
-func registerRoutes(mux *http.ServeMux, cfg *m.Config, log *log.Logger) {
+func registerRoutes(mux *mux.Router, cfg *m.Config, log *log.Logger) {
 	store := h.NewInMemoryChallengeStore()
 
-	mux.Handle("/authorize", h.WithPrometheus(h.NewAuthorizeHandler(log, cfg.Provider, "/code")))
-	mux.Handle("/token", h.WithPrometheus(h.NewAccessTokenHandler(log, store, cfg.Provider)))
-	mux.Handle("/code", h.WithPrometheus(h.NewAuthorizeCodeHandler(log, store)))
+	mux.Handle("/authorize", h.NewAuthorizeHandler(log, cfg.Provider, "/code")).Methods("GET")
+	mux.Handle("/token", h.NewAccessTokenHandler(log, store, cfg.Provider)).Methods("POST")
+	mux.Handle("/code", h.NewAuthorizeCodeHandler(log, store)).Methods("GET")
 	mux.Handle("/metrics", promhttp.Handler())
+
+	mux.Use(h.PrometheusMiddleware)
 }
