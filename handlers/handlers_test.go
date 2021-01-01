@@ -4,18 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/bwilczynski/oauth2-pkce-proxy/models"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-)
-
-var (
-	authorizeURL, _ = url.Parse("http://whatever/authorize")
-	tokenURL, _     = url.Parse("http://whatever/token")
 )
 
 func TestAuthorizeHandler(t *testing.T) {
@@ -32,7 +26,7 @@ func TestAuthorizeHandler(t *testing.T) {
 
 func createAuthorizeHandler() *authorizeHandler {
 	l := zerolog.Nop()
-	p := &models.OAuth2Provider{AuthorizationEndpoint: authorizeURL, TokenEndpoint: tokenURL}
+	p := &models.OAuth2Provider{AuthorizationEndpoint: "http://whatever/authorize", TokenEndpoint: "http://whatever/token"}
 
 	return NewAuthorizeHandler(&l, p, "")
 }
