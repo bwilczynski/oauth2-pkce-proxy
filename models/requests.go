@@ -3,6 +3,8 @@ package models
 import (
 	"net/http"
 	"net/url"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -10,41 +12,22 @@ const (
 )
 
 type AuthorizeRequest struct {
-	ClientId            string
-	CodeChallenge       string
-	CodeChallengeMethod string
-	RedirectUri         string
+	ClientId            string `mapstructure:"client_id"`
+	CodeChallenge       string `mapstructure:"code_challenge"`
+	CodeChallengeMethod string `mapstructure:"code_challenge_method"`
+	RedirectUri         string `mapstructure:"redirect_uri"`
 }
 
 func (ar *AuthorizeRequest) FromQueryParams(r *http.Request) {
-	query := r.URL.Query()
+	decode(r.URL.Query(), ar)
 
-	ar.ClientId = query.Get("client_id")
-	ar.CodeChallenge = query.Get("code_challenge")
-	if codeChallengeMethod := query.Get("code_challenge_method"); codeChallengeMethod != "" {
-		ar.CodeChallengeMethod = codeChallengeMethod
-	} else {
+	if ar.CodeChallengeMethod == "" {
 		ar.CodeChallengeMethod = CodeChallengeMethodS256
 	}
-	ar.RedirectUri = query.Get("redirect_uri")
 }
 
 func (ar *AuthorizeRequest) URLQuery() string {
-	q := make(url.Values)
-
-	if ar.ClientId != "" {
-		q.Add("client_id", ar.ClientId)
-	}
-	if ar.CodeChallenge != "" {
-		q.Add("code_challenge", ar.CodeChallenge)
-	}
-	if ar.CodeChallengeMethod != "" {
-		q.Add("code_challenge_method", ar.CodeChallengeMethod)
-	}
-	if ar.RedirectUri != "" {
-		q.Add("redirect_uri", ar.RedirectUri)
-	}
-
+	q := encode(ar)
 	return q.Encode()
 }
 
@@ -57,19 +40,16 @@ func (ar *AuthorizeRequest) Validate() error {
 }
 
 type AuthorizeCodeRequest struct {
-	Code        string
-	RedirectUri string
+	Code        string `mapstructure:"code"`
+	RedirectUri string `mapstructure:"redirect_uri"`
+}
+
+func (cr *AuthorizeCodeRequest) FromQueryParams(r *http.Request) error {
+	return decode(r.URL.Query(), cr)
 }
 
 func (ar *AuthorizeCodeRequest) URLQuery() string {
-	q := make(url.Values)
-	if ar.Code != "" {
-		q.Add("code", ar.Code)
-	}
-	if ar.RedirectUri != "" {
-		q.Add("redirect_uri", ar.RedirectUri)
-	}
-
+	q := encode(ar)
 	return q.Encode()
 }
 
@@ -80,25 +60,36 @@ func (cr *AuthorizeCodeRequest) Validate() error {
 	)
 }
 
-func (cr *AuthorizeCodeRequest) FromQueryParams(r *http.Request) {
-	query := r.URL.Query()
-
-	cr.Code = query.Get("code")
-	cr.RedirectUri = query.Get("redirect_uri")
-}
-
 type AccessTokenRequest struct {
-	ClientId     string
-	Code         string
-	GrantType    string
-	CodeVerifier CodeVerifier
+	ClientId     string       `mapstructure:"client_id"`
+	Code         string       `mapstructure:"code"`
+	GrantType    string       `mapstructure:"grant_type"`
+	CodeVerifier CodeVerifier `mapstructure:"code_verifier"`
 }
 
-func (tr *AccessTokenRequest) FromQueryParams(r *http.Request) {
+func (tr *AccessTokenRequest) FromQueryParams(r *http.Request) error {
 	r.ParseForm()
+	return decode(r.Form, tr)
+}
 
-	tr.ClientId = r.Form.Get("client_id")
-	tr.Code = r.Form.Get("code")
-	tr.GrantType = r.Form.Get("grant_type")
-	tr.CodeVerifier = CodeVerifier(r.Form.Get("code_verifier"))
+func decode(vals url.Values, v interface{}) error {
+	fvals := make(map[string]string)
+
+	for k, v := range vals {
+		fvals[k] = v[0]
+	}
+
+	return mapstructure.Decode(fvals, v)
+}
+
+func encode(v interface{}) url.Values {
+	vals := make(url.Values)
+	fvals := make(map[string]string)
+
+	mapstructure.Decode(v, &fvals)
+	for k, v := range fvals {
+		vals.Set(k, v)
+	}
+
+	return vals
 }
