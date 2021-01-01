@@ -36,7 +36,7 @@ func (h *accessTokenHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 
 	fd := formData(r.Form)
 	fd.Set("client_secret", h.provider.ClientSecret)
-	resp, err := http.PostForm(h.provider.TokenURL.String(), fd)
+	resp, err := http.PostForm(h.provider.TokenEndpoint, fd)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return

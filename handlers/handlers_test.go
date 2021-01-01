@@ -32,7 +32,7 @@ func TestAuthorizeHandler(t *testing.T) {
 
 func createAuthorizeHandler() *authorizeHandler {
 	l := zerolog.Nop()
-	p := &models.OAuth2Provider{AuthorizeURL: authorizeURL, TokenURL: tokenURL}
+	p := &models.OAuth2Provider{AuthorizationEndpoint: authorizeURL, TokenEndpoint: tokenURL}
 
 	return NewAuthorizeHandler(&l, p, "")
 }

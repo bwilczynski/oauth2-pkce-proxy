@@ -32,7 +32,7 @@ func (h *authorizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	q.Set("redirect_uri", fmt.Sprintf("http://%s%s?redirect_uri=%s", r.Host, h.callbackPath, ar.RedirectUri))
 
-	redirectURI := fmt.Sprintf("%s?%s", h.provider.AuthorizeURL, q.Encode())
+	redirectURI := fmt.Sprintf("%s?%s", h.provider.AuthorizationEndpoint, q.Encode())
 	w.Header().Add("Location", redirectURI)
 	setChallengeCookie(w, ar.CodeChallenge)
 	w.WriteHeader(http.StatusFound)
