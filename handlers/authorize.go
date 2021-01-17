@@ -20,21 +20,22 @@ func NewAuthorizeHandler(logger *zerolog.Logger, provider *m.OAuth2Provider, cal
 }
 
 func (h *authorizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ar := &m.AuthorizeRequest{}
-	ar.FromQueryParams(r)
+	const (
+		redirectURI   = "redirect_uri"
+		codeChallenge = "code_challenge"
+	)
 
-	if err := ar.Validate(); err != nil {
+	q := r.URL.Query()
+	if err := m.ValidateRequired(q, redirectURI, codeChallenge); err != nil {
 		h.logger.Error().Err(err).Msg("")
 		writeError(w, err)
 		return
 	}
 
-	q := r.URL.Query()
-	q.Set("redirect_uri", fmt.Sprintf("http://%s%s?redirect_uri=%s", r.Host, h.callbackPath, ar.RedirectUri))
-
-	redirectURI := fmt.Sprintf("%s?%s", h.provider.AuthorizationEndpoint, q.Encode())
-	w.Header().Add("Location", redirectURI)
-	setChallengeCookie(w, ar.CodeChallenge)
+	q.Set(redirectURI, fmt.Sprintf("http://%s%s?redirect_uri=%s", r.Host, h.callbackPath, q.Get(redirectURI)))
+	loc := fmt.Sprintf("%s?%s", h.provider.AuthorizationEndpoint, q.Encode())
+	w.Header().Add("Location", loc)
+	setChallengeCookie(w, q.Get(codeChallenge))
 	w.WriteHeader(http.StatusFound)
 }
 

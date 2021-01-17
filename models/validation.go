@@ -1,5 +1,9 @@
 package models
 
+import (
+	"net/url"
+)
+
 type (
 	FieldError struct {
 		FieldName string `json:"fieldName"`
@@ -21,18 +25,15 @@ func (vr *ValidationError) Error() string {
 	return vr.Message
 }
 
-func Validate(fields ...interface{}) error {
+func ValidateRequired(v url.Values, fields ...string) error {
 	errors := []FieldError{}
-
 	for _, f := range fields {
-		if rf, ok := f.(RequiredField); ok && *rf.Value == "" {
-			errors = append(errors, FieldError{FieldName: rf.Name, Message: "Required field"})
+		if v.Get(f) == "" {
+			errors = append(errors, FieldError{FieldName: f, Message: "Required field"})
 		}
 	}
-
 	if len(errors) > 0 {
 		return &ValidationError{Message: "Bad request", Errors: errors}
 	}
-
 	return nil
 }

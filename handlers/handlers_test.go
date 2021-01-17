@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	"net/url"
 	"testing"
 
 	"github.com/bwilczynski/oauth2-pkce-proxy/models"
@@ -13,15 +13,29 @@ import (
 )
 
 func TestAuthorizeHandler(t *testing.T) {
-	rr := httptest.NewRecorder()
-	ar := &models.AuthorizeRequest{CodeChallenge: "whatever", ClientId: "whatever", RedirectUri: "whatever"}
-	r, _ := http.NewRequest("GET", fmt.Sprintf("/authorize?%s", ar.URLQuery()), nil)
-	h := createAuthorizeHandler()
+	testcases := []struct {
+		query map[string][]string
+		code  int
+	}{
+		{
+			query: map[string][]string{},
+			code:  http.StatusBadRequest,
+		},
+		{
+			query: map[string][]string{"redirect_uri": {"whatever"}, "code_challenge": {"whatever"}},
+			code:  http.StatusFound,
+		},
+	}
 
-	h.ServeHTTP(rr, r)
+	for _, tc := range testcases {
+		rr := httptest.NewRecorder()
+		r, _ := http.NewRequest("GET", fmt.Sprintf("/authorize?%s", url.Values(tc.query).Encode()), nil)
+		h := createAuthorizeHandler()
 
-	assert.Equal(t, http.StatusFound, rr.Code)
-	assert.NotEqual(t, "", rr.Result().Header.Get("Location"))
+		h.ServeHTTP(rr, r)
+
+		assert.Equal(t, tc.code, rr.Code)
+	}
 }
 
 func createAuthorizeHandler() *authorizeHandler {
@@ -32,15 +46,29 @@ func createAuthorizeHandler() *authorizeHandler {
 }
 
 func TestAuthorizeCodeHandler(t *testing.T) {
-	rr := httptest.NewRecorder()
-	cr := &models.AuthorizeCodeRequest{Code: "whatever", RedirectUri: "http://callback"}
-	r, _ := http.NewRequest("GET", fmt.Sprintf("/code?%s", cr.URLQuery()), nil)
-	h := createAuthorizeCodeHandler()
+	testcases := []struct {
+		query map[string][]string
+		code  int
+	}{
+		{
+			query: map[string][]string{},
+			code:  http.StatusBadRequest,
+		},
+		{
+			query: map[string][]string{"code": {"whatever"}, "redirect_uri": {"whatever"}},
+			code:  http.StatusFound,
+		},
+	}
 
-	h.ServeHTTP(rr, r)
+	for _, tc := range testcases {
+		rr := httptest.NewRecorder()
+		r, _ := http.NewRequest("GET", fmt.Sprintf("/code?%s", url.Values(tc.query).Encode()), nil)
+		h := createAuthorizeCodeHandler()
 
-	assert.Equal(t, http.StatusFound, rr.Code)
-	assert.True(t, strings.Index(rr.Result().Header.Get("Location"), cr.RedirectUri) == 0)
+		h.ServeHTTP(rr, r)
+
+		assert.Equal(t, tc.code, rr.Code)
+	}
 }
 
 func createAuthorizeCodeHandler() *authorizeCodeHandler {
