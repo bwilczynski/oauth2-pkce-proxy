@@ -26,16 +26,16 @@ func (h *accessTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		codeVerifier = "code_verifier"
 	)
 
-	q := r.URL.Query()
-	if err := m.ValidateRequired(q, clientID, code, codeVerifier); err != nil {
+	r.ParseForm()
+	if err := m.ValidateRequired(r.Form, clientID, code, codeVerifier); err != nil {
 		h.logger.Error().Err(err).Msg("")
 		writeError(w, err)
 		return
 	}
 
-	challenge := h.store.Get(q.Get(code))
+	challenge := h.store.Get(r.Form.Get(code))
 
-	cv := m.CodeVerifier(q.Get(codeVerifier))
+	cv := m.CodeVerifier(r.Form.Get(codeVerifier))
 	if ok := cv.Verify(challenge); !ok {
 		h.logger.Error().
 			Str("code_verifier", string(cv)).

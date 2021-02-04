@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/gorilla/mux v1.8.0
-	github.com/mitchellh/mapstructure v1.4.0
 	github.com/prometheus/client_golang v1.8.0
 	github.com/rs/zerolog v1.20.0
 	github.com/spf13/pflag v1.0.5
