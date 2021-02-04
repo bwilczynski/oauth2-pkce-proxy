@@ -18,25 +18,26 @@ func NewAuthorizeCodeHandler(logger *zerolog.Logger, store ChallengeStore) *auth
 }
 
 func (h *authorizeCodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cr := &m.AuthorizeCodeRequest{}
-	cr.FromQueryParams(r)
+	const (
+		code        = "code"
+		redirectURI = "redirect_uri"
+	)
 
-	if err := cr.Validate(); err != nil {
+	q := r.URL.Query()
+	if err := m.ValidateRequired(q, code, redirectURI); err != nil {
 		h.logger.Error().Err(err).Msg("")
 		writeError(w, err)
 		return
 	}
 
 	challenge := readChallengeCookie(r)
-	h.store.Write(cr.Code, challenge)
+	h.store.Write(q.Get(code), challenge)
 
-	q := r.URL.Query()
-	q.Del("redirect_uri")
+	rURI, _ := url.Parse(q.Get(redirectURI))
+	q.Del(redirectURI)
+	rURI.RawQuery = q.Encode()
 
-	redirectURI, _ := url.Parse(cr.RedirectUri)
-	redirectURI.RawQuery = q.Encode()
-
-	w.Header().Add("Location", redirectURI.String())
+	w.Header().Add("Location", rURI.String())
 	w.WriteHeader(http.StatusFound)
 }
 
