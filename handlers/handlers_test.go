@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/bwilczynski/oauth2-pkce-proxy/models"
@@ -76,4 +77,40 @@ func createAuthorizeCodeHandler() *authorizeCodeHandler {
 	store := NewInMemoryChallengeStore()
 
 	return NewAuthorizeCodeHandler(&l, store)
+}
+
+func TestAccessTokenHandler(t *testing.T) {
+	testcases := []struct {
+		form map[string][]string
+		code int
+	}{
+		{
+			form: map[string][]string{},
+			code: http.StatusBadRequest,
+		},
+		{
+			form: map[string][]string{"client_id": {"whatever"}, "code": {"whatever"}, "code_verifier": {"whatever"}},
+			code: http.StatusForbidden,
+		},
+	}
+
+	for _, tc := range testcases {
+		rr := httptest.NewRecorder()
+		body := strings.NewReader(url.Values(tc.form).Encode())
+		r, _ := http.NewRequest("POST", "/token", body)
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		h := createAccessTokenHandler()
+
+		h.ServeHTTP(rr, r)
+
+		assert.Equal(t, tc.code, rr.Code)
+	}
+}
+
+func createAccessTokenHandler() *accessTokenHandler {
+	l := zerolog.Nop()
+	store := NewInMemoryChallengeStore()
+	provider := &models.OAuth2Provider{AuthorizationEndpoint: "http://whatever/authorize", TokenEndpoint: "http://whatever/token"}
+
+	return NewAccessTokenHandler(&l, store, provider)
 }
